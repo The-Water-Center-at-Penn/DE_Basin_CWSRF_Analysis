@@ -1,0 +1,104 @@
+---
+title: "Delaware Basin CWSRF Analysis"
+author: "Richard Barad"
+date: "2024-05-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(gridExtra)
+library(scales)
+
+```
+
+Read data from Excel
+
+```{r read_data}
+
+de_river <- read_excel('Data/De_river_states_project.xlsx')
+```
+
+## Plots for American Rivers Report
+
+All Projects Across the state and total funding across all three states.
+
+``` {r all_projects}
+
+ggplot(data=de_river,aes(x=State))+
+  geom_bar(stat='count',width=0.65,fill='lightblue')+
+  geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -10)+
+  theme_classic()+
+  labs(y='Number of Projects',y='State')+
+  theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))+
+  ggtitle('Number of CWSRF Projects By State')
+
+```
+
+Number of Nature Based Solutions by State.
+
+```{r nature_based_count, fig.width=10, fig.height=5}
+
+count_nature <- de_river %>% filter(Nature_Based > 0) %>% group_by(State) %>% tally() %>% rename(nature = n)
+count_all <- de_river %>% group_by(State) %>% tally() %>% rename(total = n)
+
+all_count <- left_join(count_nature,count_all,by='State') %>%
+  mutate(percent = nature / total)
+
+grid.arrange(
+
+ggplot(data=de_river %>% filter(Nature_Based > 0),aes(x=State))+
+  geom_bar(stat='count',width=0.65,fill='lightblue')+
+  geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -1)+
+  theme_classic()+
+  labs(y='Number of Projects',y='State')+
+  theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))+
+  ggtitle('Number of Nature Based Solution Projects By State'),
+
+ggplot(data=all_count,aes(x=State,y=percent))+
+  geom_bar(stat='identity',width=0.65,fill='lightgreen')+
+  geom_text(aes(label=paste(as.character(round(percent * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
+  scale_y_continuous(limits=c(0,0.2),labels = scales::percent)+
+  labs(y='Percent of Projects',x='State')+
+  theme_classic()+
+  theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))+
+  ggtitle('Percent of Projects with a Nature Based Solution Component'),
+
+nrow=1)
+
+```
+
+```{r nature_based_funding, fig.width=10, fig.height=5}
+
+money_nature <- de_river %>% filter(Nature_Based > 0) %>% group_by(State) %>% summarize(nature = sum(Nature_Based))
+money_all <- de_river %>% filter(Nature_Based > 0) %>% group_by(State) %>% summarize(total = sum(Current_Agreement_Amount))
+
+money_join <- left_join(count_nature,count_all,by='State') %>%
+  mutate(percent = nature / total)
+
+grid.arrange(
+
+ggplot(data=de_river,aes(x=State,y=Nature_Based))+
+  geom_bar(stat='sum',width=0.65,fill='lightblue', show.legend = FALSE)+
+  geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', nudge_y = 5000000)+
+  scale_y_continuous(labels = label_dollar())+
+  theme_classic()+
+  labs(y='Project Funding (USD)',y='State')+
+  theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))+
+  ggtitle('Funding For Nature Based Solutions By State'),
+
+ggplot(data=money_join,aes(x=State,y=percent))+
+  geom_bar(stat='identity',width=0.65,fill='lightgreen')+
+  geom_text(aes(label=paste(as.character(round(percent * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
+  scale_y_continuous(limits=c(0,0.2),labels = scales::percent)+
+  labs(y='Percent of Funding',x='State')+
+  theme_classic()+
+  theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))+
+  ggtitle('Percent of Money Spent on Nature Based Solutions'),
+
+nrow=1)
+
+```
