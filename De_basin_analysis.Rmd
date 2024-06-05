@@ -21,7 +21,7 @@ Read data from Excel
 
 ```{r read_data}
 
-data <- read_excel('Data/De_river_states_project.xlsx') %>%
+data <- read_excel('Data/De_river_states.xlsx') %>%
   mutate(total = Nature_Based + Gray)
 ```
 
@@ -313,5 +313,106 @@ ggsave('outputs/nature_based_totals_basin_percent.png',units='in',width=5,height
 
 
 ```
+
+# Additional PA Focused Analysis for WaterNow
+
+``` {r pa_data}
+
+pa_data <- data %>%
+  filter(State == 'Pennsylvania')
+
+```
+
+``` {r disadvanated_communites}
+
+agg <- pa_data %>%
+  group_by(Hardship_Disadvantaged_Communit) %>%
+  summarize(count = n(),subsidy = sum(Additional_Subsidy_Amount),total = sum(Current_Agreement_Amount)) %>%
+  mutate(percent = count / sum(count) * 100,
+         percent_total_subsidy = subsidy/sum(subsidy) * 100,
+         percent_funding_subsidized = subsidy / total * 100,
+         percent_funding = total / sum(total) * 100)
+
+
+ggplot(agg, aes(x="", y=percent, fill=Hardship_Disadvantaged_Communit))+
+  geom_bar(stat="identity", width=2, color="gray80") +
+  coord_polar("y", start=0) +
+  geom_text(aes(label = paste0(round(percent), "%")),position = position_stack(vjust = 0.5))+
+  scale_fill_manual(values=c('#ffe093','lightgreen'),name='Disadvantaged Community')+
+  theme_void()+
+  labs(title='% of Projects in Pennsylvania Located \n in Disadvantaged Communities, June 2018 to July 2023')
+
+ggsave('outputs/disadvantaged_pie.png',units='in',width=5,height=4)
+
+ggplot(agg, aes(x="", y=percent_funding , fill=Hardship_Disadvantaged_Communit))+
+  geom_bar(stat="identity", width=2, color="gray80") +
+  coord_polar("y", start=0) +
+  geom_text(aes(label = paste0(round(percent_funding), "%")),position = position_stack(vjust = 0.5))+
+  scale_fill_manual(values=c('#ffe093','lightgreen'),name='Disadvantaged Community')+
+  theme_void()+
+  labs(title='% of CWSRF Funding in Pennsylvania Going to Disadvantaged Communities')
+
+ggsave('outputs/percent_pie.png',units='in',width=5,height=4)
+
+hardship_funding <- pa_data %>%
+  summarise(subsidy = sum(Additional_Subsidy_Amount),total = sum(Current_Agreement_Amount)) %>%
+  mutate(non_subsidy = total - subsidy) %>%
+  pivot_longer(cols = everything()) %>%
+  filter(name != 'total') %>%
+  mutate(percent = value / sum(value) * 100)
+
+ggplot(hardship_funding, aes(x="", y=percent, fill=name))+
+  geom_bar(stat="identity", width=2, color="gray80") +
+  coord_polar("y", start=0) +
+  geom_text(aes(label = paste0(round(percent), "%")),position = position_stack(vjust = 0.5))+
+  scale_fill_manual(values=c('#ffe093','lightgreen'),name='',labels=c('Not Subsidized','Subsidized'))+
+  theme_void()+
+  labs(title='% of CWSRF Funding in Pennslyvania that was Subsized \n June 2018 - July 2023')
+
+ggsave('outputs/percent_subsized_pie.png',units='in',width=5,height=4)
+
+```
+
+``` {r types}
+
+hardship_funding_type <- pa_data %>%
+  filter(Hardship_Disadvantaged_Communit == 'Yes') %>%
+  mutate(wastewater = Secondary_Treatment + Advanced_Treatment + Infiltration_Inflow_Correction + Sewer_System_Rehabilitation + New_Collector_Sewers + New_Interceptors + CSO_Correction,
+         stormwater = Green_Infrastructure + Gray_Infrastructure,
+         energy = Renewable_Energy + Energy_Efficiency,
+         water_conservation = Water_Efficiency,
+         non_point_source = Agricultural_BMPs + Silviculture + Ground_Water__Unknown_Source_ + Brownfields + Sanitary_Landfills + Hydromodification_Habitat_Resto + Individual_Decentralized_Sewage + Land_Conservation) %>%
+  select(id,wastewater,stormwater,energy,water_conservation,non_point_source) %>%
+  pivot_longer(cols=-id,names_to='Category',values_to='Value') %>%
+  filter(Value != 0)
+
+summary_type_hardship <- hardship_funding_type %>% 
+  group_by(Category) %>% summarize(funding = sum(Value)) %>%
+  mutate(percent = funding / sum(funding))
+
+funding_type <- pa_data %>%
+  mutate(wastewater = Secondary_Treatment + Advanced_Treatment + Infiltration_Inflow_Correction + Sewer_System_Rehabilitation + New_Collector_Sewers + New_Interceptors + CSO_Correction,
+         stormwater = Green_Infrastructure + Gray_Infrastructure,
+         energy = Renewable_Energy + Energy_Efficiency,
+         water_conservation = Water_Efficiency,
+         non_point_source = Agricultural_BMPs + Silviculture + Ground_Water__Unknown_Source_ + Brownfields + Sanitary_Landfills + Hydromodification_Habitat_Resto + Individual_Decentralized_Sewage + Land_Conservation) %>%
+  select(id,wastewater,stormwater,energy,water_conservation,non_point_source) %>%
+  pivot_longer(cols=-id,names_to='Category',values_to='Value') %>%
+  filter(Value != 0)
+
+summary_type <- funding_type %>% 
+  group_by(Category) %>% summarize(funding = sum(Value)) %>%
+  mutate(percent = funding / sum(funding))
+
+
+ggplot()+
+  geom_col(data=hardship_funding_type,aes(x='',y=Value,fill=Category))+
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c('#fcd253','#7fffb4','#96beff'),labels=c('Non Point Source','Stormwater','Wastewater'),name='Project Category')+
+  labs(title='Funding by Project Category in Disadvantaged Communities \n June 2018 to July 2023')+
+  theme_void()
+
+ggsave('outputs/type.png',units='in',width=5,height=4)
+  
 
 ```
