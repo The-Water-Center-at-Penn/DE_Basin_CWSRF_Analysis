@@ -33,23 +33,21 @@ All Projects Across the state and total funding across all three states.
 
 
 chart1 <- ggplot(data=data,aes(x=State))+
-  geom_bar(stat='count',width=0.65,fill='lightblue')+
+  geom_bar(stat='count',width=0.65,fill='#82AFD3')+
   geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -10)+
   theme_classic()+
   labs(y='Number of Projects',y='State')+
-  theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5))+
-  ggtitle('Number of CWSRF Projects By State')
+  theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5))
 
 ggsave('outputs/CWSRF_count.png',units='in',width=5,height=5)
 
 chart2 <- ggplot(data=data,aes(x=State,y=total))+
-  geom_col(width=0.65,fill='lightgreen')+
+  geom_col(width=0.65,fill='#008e00')+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=2.7,nudge_y=-100000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
   labs(y='Total Funding For Projects',y='State')+
-  theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5))+
-  ggtitle('Total Funding for CWSRF Projects By State')
+  theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5))
 
 ggsave('outputs/CWSRF_funding.png',units='in',width=5,height=5)
 
@@ -97,19 +95,19 @@ all_count <- left_join(count_nature,count_all,by='State') %>%
 
 
 chart3 <- ggplot(data=data %>% filter(Nature_Based > 0),aes(x=State))+
-  geom_bar(stat='count',width=0.65,fill='lightblue')+
+  geom_bar(stat='count',width=0.65,fill='#82AFD3')+
   geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -1)+
   theme_classic()+
-  labs(y='Number of Projects',y='State',title='Number of Nature Based Solution Projects By State',subtitle ='  July 2018 - June 2023')+
+  labs(y='Number of Projects',y='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))
 
 ggsave('outputs/nature_based.png',units='in',width=5,height=5)
 
 chart4 <-ggplot(data=all_count,aes(x=State,y=percent_nbs))+
-  geom_bar(stat='identity',width=0.65,fill='lightgreen')+
+  geom_bar(stat='identity',width=0.65,fill='#008e00')+
   geom_text(aes(label=paste(as.character(round(percent_nbs * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
   scale_y_continuous(limits=c(0,0.2),labels = scales::percent)+
-  labs(y='Percent of Projects',x='State',title='% of Projects with a Nature Based Solution Component',subtitle='  July 2018 - June 2023')+
+  labs(y='Percent of Projects',x='State')+
   theme_classic()+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5))
 
@@ -129,20 +127,20 @@ money_join <- left_join(money_nature,money_all,by='State') %>%
          percent_other = 1 - percent_nbs)
 
 chart5 <- ggplot(data=data,aes(x=State,y=Nature_Based))+
-  geom_col(width=0.65,fill='lightblue')+
+  geom_col(width=0.65,fill='#82AFD3')+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', nudge_y = 5000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Project Funding (USD)',y='State',title='Funding For Nature Based Solutions By State',subtitle='  July 2018 - June 2023')+
+  labs(y='Project Funding (USD)',y='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))
 
 ggsave('outputs/nbs_funding.png',units='in',width=5,height=5)
 
 chart6 <- ggplot(data=money_join,aes(x=State,y=percent_nbs))+
-  geom_bar(stat='identity',width=0.65,fill='lightgreen')+
+  geom_bar(stat='identity',width=0.65,fill='#008e00')+
   geom_text(aes(label=paste(as.character(round(percent_nbs * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
   scale_y_continuous(limits=c(0,0.2),labels = scales::percent)+
-  labs(y='Percent of Funding',x='State',title = 'Percent of Money Spent on Nature Based Solutions',subtitle='  July 2018 - June 2023')+
+  labs(y='Percent of Funding',x='State')+
   theme_classic()+
   theme(panel.grid.major.y = element_line(color = "gray90",size = 0.5),plot.title = element_text(hjust = 0.5))
 
@@ -161,9 +159,9 @@ data %>%
     geom_bar(width=0.7 ,fun = sum, stat = "summary")+
     geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum',size=2.8,position = position_stack(vjust=0.8))+
     theme_classic()+
-    scale_fill_manual(values=c('gray80','lightgreen'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
+    scale_fill_manual(values=c('#CCCCCC','#008e00'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
     scale_y_continuous(labels = label_dollar())+
-    labs(y='Total Funding (USD)',x='State',title='Funding for Nature Based Solutions and Traditional Projects',subtitle = '  July 2018 - June 2023')
+    labs(y='Total Funding (USD)',x='State')
 
 ggsave('outputs/nature_based_totals.png',units='in',width=7,height=5)
 
@@ -173,10 +171,10 @@ money_join %>%
   ggplot(aes(x=State,y=values,fill=type))+
     geom_bar(width=0.7,stat='identity', show.legend = FALSE)+
     theme_classic()+
-    scale_fill_manual(values=c('lightgreen','gray80'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
+    scale_fill_manual(values=c('#008e00','#CCCCCC'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
     scale_y_continuous(labels = scales::percent)+
     geom_text(aes(label = paste(round(values * 100,2),'%'),y=values,x=State),size=3,position = position_stack(vjust=0.5))+
-    labs(y='Percent of Funding',x='State',title='% of Funding for Nature Based Solutions and Traditional Projects',subtitle = '  July 2018 - June 2023')
+    labs(y='Percent of Funding',x='State')
 
 ggsave('outputs/nature_based_totals_percent.png',units='in',width=5,height=5)
 
@@ -195,11 +193,11 @@ totals_nbs_cat %>%
   filter(funding > 0) %>%
   ggplot(aes(x=State,y=funding,fill=type))+
     geom_col(width=0.7)+
-    geom_text(aes(label = label_dollar()(after_stat(y))),size=2.6,position = position_stack(vjust=0.5))+
+    geom_text(aes(label = label_dollar()(after_stat(y))),size=2.6,position = position_stack(vjust=0.5),color='white')+
     theme_classic()+
     scale_y_continuous(labels = label_dollar())+
-    scale_fill_manual(values=c('#b2df8a','#a6cee3','#33a02c','#fb9a99'),labels=c('Green Infrasturcture','Hydromodification/Habitat Restoration','Land Conservation','Silviculture'),name='Project Type')+
-    labs(y='Total Funding (USD)',x='State',title='Funding for Nature Based Solutions by Project Type',subtitle='  July 2018 - June 2023')
+    scale_fill_manual(values=c('#008e00','#011F5B','#82AFD3','#990000'),labels=c('Green Infrasturcture','Hydromodification/Habitat Restoration','Land Conservation','Silviculture'),name='Project Type')+
+    labs(y='Total Funding (USD)',x='State')
 
 ggsave('outputs/nature_based_type.png',units='in',width=7,height=5)
 
@@ -211,20 +209,20 @@ de_river_data <- data %>%
   filter(Basin == 'Yes')
 
 ggplot(data=de_river_data,aes(x=State))+
-  geom_bar(stat = "count",width=0.65,fill='lightblue')+
+  geom_bar(stat = "count",width=0.65,fill='#82AFD3')+
   geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -5)+
   theme_classic()+
-  labs(y='Number of Projects',x='State',title='Number of Projects by State in Delaware River Basin',subtitle='July 2018 - June 2023')+
+  labs(y='Number of Projects',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))
 
 ggsave('outputs/DE_Basin_projects_count.png',units='in',width=5,height=5)
 
 ggplot(data=de_river_data,aes(x=State,y=total))+
-  geom_col(width=0.65,fill='lightgreen')+
+  geom_col(width=0.65,fill='#008e00')+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=2.7,nudge_y=-10000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Total Funding (USD)',x='State',title='Funding for Projects in Delaware River Basin',subtitle='July 2018 - June 2023')+
+  labs(y='Total Funding (USD)',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))+
   ggtitle('Total Funding for CWSRF Projects By State')
 
@@ -235,20 +233,20 @@ ggsave('outputs/DE_Basin_projects_funding.png',units='in',width=5,height=5)
 ```{r de_basin2}
 
 ggplot(data=de_river_data %>% filter(Nature_Based > 0),aes(x=State))+
-  geom_bar(stat = "count",width=0.65,fill='lightblue')+
+  geom_bar(stat = "count",width=0.65,fill='#82AFD3')+
   geom_text(aes(label=after_stat(count)),stat='count',nudge_y = -0.5)+
   theme_classic()+
-  labs(y='Number of Projects',x='State',title='Nature Based Solution Projects\nin Delaware River Basin',subtitle='July 2018 - June 2023')+
+  labs(y='Number of Projects',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))
 
 ggsave('outputs/DE_Basin_NBS_projects_count.png',units='in',width=5,height=5)
 
 ggplot(data=de_river_data %>% filter(Nature_Based > 0),aes(x=State,y=total))+
-  geom_col(width=0.65,fill='lightgreen')+
+  geom_col(width=0.65,fill='#008e00')+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=2.7,nudge_y=-1000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Total Funding (USD)',x='State',title='Funding for Nature Based Solution Projects\nin Delaware River Basin',subtitle='July 2018 - June 2023')+
+  labs(y='Total Funding (USD)',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))
 
 ggsave('outputs/DE_Basin_NBS_projects_funding.png',units='in',width=5,height=5)
@@ -265,10 +263,10 @@ basin_count <- left_join(nbs_basin_count,all_basin_count,by='State') %>%
   mutate(percent_nbs = nbs_count / all_count)
 
 ggplot(data=basin_count,aes(x=State,y=percent_nbs))+
-  geom_bar(stat='identity',width=0.65,fill='lightgreen')+
+  geom_bar(stat='identity',width=0.65,fill='#008e00')+
   geom_text(aes(label=paste(as.character(round(percent_nbs * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
   scale_y_continuous(limits=c(0,0.3),labels = scales::percent)+
-  labs(y='Percent of Projects',x='State',title='% of Projects in Delaware Basin with a Nature Based \n Solution Component',subtitle='July 2018 - June 2023')+
+  labs(y='Percent of Projects',x='State')+
   theme_classic()+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))
 
@@ -285,9 +283,9 @@ de_river_data %>%
     geom_bar(width=0.7 ,fun = sum, stat = "summary")+
     geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum',size=2.8,position = position_stack(vjust=0.75))+
     theme_classic()+
-    scale_fill_manual(values=c('gray80','lightgreen'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
+    scale_fill_manual(values=c('#CCCCCC','#008e00'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
     scale_y_continuous(labels = label_dollar())+
-    labs(y='Total Funding (USD)',x='State',title='Funding for Nature Based Solutions and Traditional Projects \n in Delaware River Basin',subtitle = '  July 2018 - June 2023')
+    labs(y='Total Funding (USD)',x='State')
 
 ggsave('outputs/nature_based_totals_basin.png',units='in',width=7,height=5)
 
@@ -304,10 +302,10 @@ money_join_basin %>%
   ggplot(aes(x=State,y=values,fill=type))+
     geom_bar(width=0.7,stat='identity', show.legend = FALSE)+
     theme_classic()+
-    scale_fill_manual(values=c('lightgreen','gray80'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
+    scale_fill_manual(values=c('#008e00','#CCCCCC'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
     scale_y_continuous(labels = scales::percent)+
     geom_text(aes(label = paste(round(values * 100,2),'%'),y=values,x=State),size=3,position = position_stack(vjust=0.5))+
-    labs(y='Percent of Funding',x='State',title='% of Funding for Nature Based Solutions Projects \n in Delaware River Basin',subtitle = '  July 2018 - June 2023')
+    labs(y='Percent of Funding',x='State')
 
 ggsave('outputs/nature_based_totals_basin_percent.png',units='in',width=5,height=5)
 
@@ -340,7 +338,7 @@ ggplot(agg, aes(x="", y=percent, fill=Hardship_Disadvantaged_Communit))+
   geom_text(aes(label = paste0(round(percent), "%")),position = position_stack(vjust = 0.5))+
   scale_fill_manual(values=c('#ffe093','lightgreen'),name='Disadvantaged Community')+
   theme_void()+
-  labs(title='% of Projects in Pennsylvania Located \n in Disadvantaged Communities, June 2018 to July 2023')
+  labs(title='% of Projects in Pennsylvania Located \n in Disadvantaged Communities, July 2017 to June 2023')
 
 ggsave('outputs/disadvantaged_pie.png',units='in',width=5,height=4)
 
@@ -367,7 +365,7 @@ ggplot(hardship_funding, aes(x="", y=percent, fill=name))+
   geom_text(aes(label = paste0(round(percent), "%")),position = position_stack(vjust = 0.5))+
   scale_fill_manual(values=c('#ffe093','lightgreen'),name='',labels=c('Not Subsidized','Subsidized'))+
   theme_void()+
-  labs(title='% of CWSRF Funding in Pennslyvania that was Subsized \n June 2018 - July 2023')
+  labs(title='% of CWSRF Funding in Pennslyvania that was Subsized \n July 2017 to June 2023')
 
 ggsave('outputs/percent_subsized_pie.png',units='in',width=5,height=4)
 
@@ -409,7 +407,7 @@ ggplot()+
   geom_col(data=hardship_funding_type,aes(x='',y=Value,fill=Category))+
   coord_polar("y", start=0) +
   scale_fill_manual(values=c('#fcd253','#7fffb4','#96beff'),labels=c('Non Point Source','Stormwater','Wastewater'),name='Project Category')+
-  labs(title='Funding by Project Category in Disadvantaged Communities \n June 2018 to July 2023')+
+  labs(title='Funding by Project Category in Disadvantaged Communities \n July 2017 to June 2023')+
   theme_void()
 
 ggsave('outputs/type.png',units='in',width=5,height=4)
