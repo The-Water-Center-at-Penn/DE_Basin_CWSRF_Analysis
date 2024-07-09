@@ -1,3 +1,6 @@
+/outputs/Equity_Analysis/census_block_data.*
+/outputs/Equity_Analysis/results_for_mapping.*
+
 # History files
 .Rhistory
 .Rapp.history

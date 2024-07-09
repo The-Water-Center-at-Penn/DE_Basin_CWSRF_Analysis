@@ -21,15 +21,19 @@ library(scales)
 
 ## Read Project Data
 
+Read CWSRF Project data
+
 ```{r read_data}
 
-data <- read_excel('Data/De_river_states.xlsx') %>%
+data_raw <- read_excel('Data/De_river_states.xlsx') %>%
   mutate(total = Nature_Based + Gray,
          stormwater = Green_Infrastructure + Gray_Infrastructure,
          wastewater = Advanced_Treatment + CSO_Correction + Infiltration_Inflow_Correction + New_Collector_Sewers + New_Interceptors + Secondary_Treatment + Sewer_System_Rehabilitation + Planning_and_Assessments,
          energy_conservation = Energy_Efficiency + Renewable_Energy,
          water_conservation = Water_Efficiency,
-         equity_analysis_funding = stormwater + wastewater + energy_conservation + water_conservation) %>%
+         equity_analysis_funding = stormwater + wastewater + energy_conservation + water_conservation) 
+
+data <- data_raw %>%
   st_as_sf(., coords = c("Longitude","Latitude"),crs='EPSG:4326') %>%
   st_transform('EPSG:2272')
 
@@ -37,13 +41,15 @@ data <- read_excel('Data/De_river_states.xlsx') %>%
 
 ## Get Urban Areas and map
 
+Get DE Basin boundaries, urban areas using tigris package and intersect urban areas with states to get just urban areas in states that are part of study area.
+
 ```{r urban_areas, echo=FALSE}
 
 de_basin <- st_read('Data/DE_Basin.shp') %>% st_transform('EPSG:2272')
 
 #Get Urban Areas and intersect with States
 
-urban_areas <- tigris::urban_areas(year=2020)
+urban_areas <- tigris::urban_areas(year=2020,criteria=2020)
 
 states <- tigris::states() %>%
   dplyr::filter(NAME %in% c('Pennsylvania','New Jersey','Delaware'))
@@ -69,10 +75,13 @@ ggplot()+
   ylim(ymin,ymax)+
   theme_void()
 
-ggsave('urban_areas2.png',height=3.8,width=2)
+ggsave('outputs/Equity_Analysis/urban_areas2.png',height=3.8,width=2)
 
 ```
+
 # Get County Boundaries and Determine Counties in Study Area
+
+Get county boundaries for states of interest, and determine counties that have an area overlap with the study area that is greater than 40%. These counties will be considered part of the study area. 
 
 ``` {r counties}
 
@@ -96,32 +105,37 @@ ggplot()+
   geom_sf(data=states,fill='transparent')+
   theme_void()
 
-ggsave('study_area.png')
+ggsave('outputs/Equity_Analysis/study_area.png')
 
 ```
 
 
 # Get Population Data
 
+Get population data 
+
 ```{r get_population}
 
-# Get Population Data
-pop_PA <- get_decennial('block group',sumfile='dhc',year=2020,state='PA',variable='P1_001N',geometry=TRUE) %>% mutate(state = 'PA')
-pop_DE <- get_decennial('block group',sumfile='dhc',year=2020,state='DE',variable='P1_001N',geometry=TRUE) %>% mutate(state = 'DE')
-pop_NJ <- get_decennial('block group',sumfile='dhc',year=2020,state='NJ',variable='P1_001N',geometry=TRUE) %>% mutate(state = 'NJ')
+# Get Population Data for counties in study area
 
-pop <- rbind(pop_PA,pop_DE,pop_NJ) %>% st_transform('EPSG:2272')
+pop_PA <- get_decennial('block',sumfile='dhc',year=2020,state='PA',variable='P1_001N',geometry=TRUE,county=c('Wayne','Philadelphia','Berks','Schuylkill','Chester','Monroe','Carbon','Montgomery','Delaware','Lehigh','Northampton','Bucks','Pike'))
+pop_DE <- get_decennial('block',sumfile='dhc',year=2020,state='DE',variable='P1_001N',geometry=TRUE,county=c('New Castle','Kent'))
+pop_NJ <- get_decennial('block',sumfile='dhc',year=2020,state='NJ',variable='P1_001N',geometry=TRUE,county=c('Sussex','Camden','Cape May','Burlington','Gloucester','Cumberland','Warren','Salem','Mercer'))
 
-#Get just census blocks located in study area
+pop <- rbind(pop_PA,pop_DE,pop_NJ) %>% st_transform('EPSG:2272') %>%
+  separate(.,col=NAME,into=c('Block','Block Group','Tract','County','State'),sep=', ')
 
-basin_blocks <- pop %>% select(-NAME) %>%
-  st_centroid() %>%
-  st_join(.,basin_counties %>% select(-GEOID),left=FALSE) 
+pop$NAME <- pop$County %>% stringr::str_remove(" County")
+
+basin_blocks <- pop %>% 
+  st_centroid()
 
 #Determine which census blocks are urban and which are rural - use centroid of census block group
 
 urban_blocks <- basin_blocks[st_intersects(basin_blocks,urban_areas) %>% lengths > 0, ] %>% mutate(urban = 'Urban')
 rural_blocks <- basin_blocks[st_intersects(basin_blocks,urban_areas) %>% lengths == 0, ] %>% mutate(urban = 'Rural')
+
+#Merge and Join back to polygon geometry
 
 pop_data_basin <- rbind(urban_blocks,rural_blocks) %>%
   st_drop_geometry() %>%
@@ -133,17 +147,21 @@ pop_data_basin <- rbind(urban_blocks,rural_blocks) %>%
 
 ``` {r CJEST}
 
-CEJST_burdened <- st_read('Data/CEJST/usa.shp') %>%
+#CJEST Shapefile is available here: https://screeningtool.geoplatform.gov/en/downloads
+
+CEJST_burdened <- st_read('C:/Users/richa/OneDrive/Documents/Professional/Water Center Work/CEJST/usa.shp') %>%
   filter(SF %in% c('New Jersey','Delaware','Pennsylvania')) %>%
   st_transform('EPSG:2272') %>%
   filter(SN_C == 1)
 
 pop_centroid <- pop_data_basin %>% st_centroid()
 
-#Determine which census blocks are overburdened
+#Determine which census blocks are overburdened - use centroid of census block group
 
 burdened_blocks <- pop_centroid[st_intersects(pop_centroid,CEJST_burdened) %>% lengths > 0, ] %>% mutate(overburdened = 'Yes')
 nonburdned_blocks <- pop_centroid[st_intersects(pop_centroid,CEJST_burdened) %>% lengths == 0, ] %>% mutate(overburdened = 'No')
+
+#Merge and Join back to polygon geometry
 
 pop_data_basin <- rbind(burdened_blocks,nonburdned_blocks) %>%
   st_drop_geometry() %>%
@@ -174,7 +192,7 @@ ggplot()+
   ylim(ymin,ymax)+
   theme_void()
 
-ggsave('urban_areas.png',width=3,height=5)
+ggsave('outputs/Equity_Analysis/urban_areas.png',width=3,height=5)
 
 ```
 
@@ -183,48 +201,55 @@ ggsave('urban_areas.png',width=3,height=5)
 #Determine Total CWSRF Funding By County
 
 funding_county <- st_join(data,basin_counties,left=FALSE) %>%
-  filter(score > 95) %>%
-  group_by(NAME) %>% summarise(funding = sum(equity_analysis_funding)) %>%
+  filter(score > 95) %>% #Drop projects that do not have a specific geographic location
+  group_by(NAME) %>% summarise(funding = sum(equity_analysis_funding),subsidy=sum(Additional_Subsidy_Amount)) %>%
   st_drop_geometry()
 
 Data_County1 <- left_join(basin_counties,funding_county,by='NAME') %>%
   st_as_sf() %>%
-  select(NAME,GEOID,funding) %>%
-  mutate(funding = ifelse(is.na(funding),0,funding))
+  select(NAME,GEOID,funding,subsidy) %>%
+  mutate(funding = ifelse(is.na(funding),0,funding),
+         subsidy = ifelse(is.na(subsidy),0,subsidy))
 
 ```
 
 ``` {r join_urban_pop}
 
-#Determine Rural / Urban Population by County
+#Determine Rural / Urban Population by County and Rural / Urban Area by County
 
 pop_county <- pop_data_basin %>%
-  mutate(NAME=ifelse(GEOID=='421039501041','Pike',NAME)) %>%
-  group_by(NAME,urban,state) %>% summarize(pop = sum(value),area=sum(area_ft)) %>%
   st_drop_geometry() %>%
-  pivot_wider(id_cols=c(NAME,state),names_from=urban,values_from=c(pop,area)) %>%
+  group_by(NAME,urban,State) %>% summarize(pop = sum(value),area=sum(area_ft)) %>%
+  pivot_wider(id_cols=c(NAME,State),names_from=urban,values_from=c(pop,area)) %>%
   mutate(pop_Rural = ifelse(is.na(pop_Rural),0,pop_Rural),
          area_Rural = ifelse(is.na(area_Rural),0,area_Rural),
          percent_urban_pop = round(pop_Urban / (pop_Urban + pop_Rural),4),
          percent_urban_area = round(area_Urban / (area_Urban + area_Rural),4)) %>%
-  select(NAME,state,pop_Urban,pop_Rural,percent_urban_pop,percent_urban_area)
-  
+  select(NAME,State,pop_Urban,pop_Rural,percent_urban_pop,percent_urban_area)
+
+#Merge with funding by county data and calculate per capita information
 Data_County2 <- left_join(Data_County1,pop_county,by='NAME') %>%
-  mutate(funding_per_urban_capita = funding / pop_Urban)
+  mutate(funding_per_urban_capita = funding / pop_Urban,
+         subsidy_per_capita = subsidy / pop_Urban)
 
 ```
 
 ```{r join_overburdned}
 
+#Calculate percent of urban population that is also overburdened according to CJEST
+
 overburdened <- pop_data_basin %>% filter(urban == 'Urban') %>%
-  group_by(NAME,overburdened) %>% summarize(pop = sum(value)) %>%
   st_drop_geometry() %>%
+  group_by(NAME,overburdened) %>% summarize(pop = sum(value)) %>%
   pivot_wider(id_cols=NAME,names_from=overburdened,values_from=pop) %>%
-  mutate(percent_urban_overbudened = Yes / (Yes + No) * 100) %>%
+  mutate(Yes = ifelse(is.na(Yes),0,Yes),
+          percent_urban_overbudened = Yes / (Yes + No)) %>%
   select(NAME,percent_urban_overbudened)
 
 
 Data_County3 <- left_join(Data_County2,overburdened,by='NAME')
+
+Data_County3_centroid <- Data_County3 %>% st_centroid()
 
 ```
 
@@ -241,20 +266,20 @@ ggplot()+
   ylim(ymin,ymax)+
   theme_void()
 
-ggsave('financing.png')
+ggsave('outputs/Equity_Analysis/financing.png')
 
 ggplot()+
   geom_sf(data=states_2272,size=2,fill='gray95')+
   geom_sf(data=Data_County3,aes(fill=funding_per_urban_capita),color='gray80')+
-  scale_fill_distiller(palette='Greens',direction=1,labels = dollar, name='Financing ($) Per \n Urban Capita')+
+  scale_fill_distiller(palette='Greens',direction=1,name='Financing ($) Per \n Urban Capita')+
   geom_sf(data=states_2272,fill='transparent',color='gray30')+
   geom_sf_text(data=basin_counties,aes(label=NAME),size=2,color='black')+
   xlim(xmin,xmax)+
   ylim(ymin,ymax)+
   theme_void()+
-  theme(legend.position="bottom",legend.text=element_text(size=7))
+  theme(legend.position="bottom",legend.text=element_text(size=6))
 
-ggsave('financing_per_capita.png')
+ggsave('outputs/Equity_Analysis/financing_per_capita.png')
 
 ggplot()+
   geom_sf(data=states_2272,size=2,fill='gray95')+
@@ -267,7 +292,7 @@ ggplot()+
   theme_void()+
   theme(legend.position="bottom",legend.text=element_text(size=9))
 
-ggsave('urban_pop.png')
+ggsave('outputs/Equity_Analysis/urban_pop.png')
 
 ggplot()+
   geom_sf(data=states_2272,size=2,fill='gray95')+
@@ -281,11 +306,11 @@ ggplot()+
   theme(legend.position="bottom",legend.text=element_text(size=9))
 
 
-ggsave('urban_percent.png')
+ggsave('outputs/Equity_Analysis/urban_percent.png')
 
 ggplot()+
   geom_sf(data=states_2272,size=2,fill='gray95')+
-  geom_sf(data=Data_County3,aes(fill=percent_urban_overbudened),color='gray80')+
+  geom_sf(data=Data_County3,aes(fill=percent_urban_overbudened * 100),color='gray80')+
   scale_fill_distiller(palette='BuPu',direction=1,name='% of Urban Pop.')+
   geom_sf(data=states_2272,fill='transparent',color='gray30')+
   geom_sf_text(data=basin_counties,aes(label=NAME),size=2,color='black')+
@@ -294,18 +319,48 @@ ggplot()+
   theme_void()+
   theme(legend.position="bottom",legend.text=element_text(size=9))
 
-ggsave('overburdened_percent.png')
+ggsave('outputs/Equity_Analysis/overburdened_percent.png')
 
+ggplot()+
+  geom_sf(data=states_2272,size=2,fill='gray95')+
+  geom_sf(data=Data_County3,aes(fill=percent_urban_overbudened * 100),color='gray80')+
+  geom_sf(data=Data_County3_centroid %>% filter(funding_per_urban_capita > 0),aes(size=funding_per_urban_capita),color='#74c5f7')+
+  scale_size_continuous(range = c(0.5,5),name='Funding Per Urban Capita')+
+  scale_fill_distiller(palette='Purples',direction=1,name='% of Urban Pop. \n that is Overburdened')+
+  geom_sf(data=states_2272,fill='transparent',color='gray30')+
+  geom_sf_text(data=Data_County3_centroid %>% filter(NAME != 'New Castle'),aes(label=NAME),size=2,color='black',position=position_nudge(x=40000,y=20000))+
+  geom_sf_text(data=Data_County3_centroid %>% filter(NAME == 'New Castle'),aes(label=NAME),size=2,color='black',position=position_nudge(x=40000,y=-20000))+
+  xlim(xmin,xmax)+
+  ylim(ymin,ymax)+
+  theme_void()
+
+ggsave('outputs/Equity_Analysis/overburdened_percent_funding.png')
 ```
 
 ``` {r export_results}
 
 Data_county3_org <- Data_County3 %>%
-  select(NAME,state,funding,pop_Urban,funding_per_urban_capita,percent_urban_pop,percent_urban_area,percent_urban_overbudened) %>%
+  select(NAME,State,funding,subsidy,pop_Urban,funding_per_urban_capita,subsidy_per_capita,percent_urban_pop,percent_urban_area,percent_urban_overbudened) %>%
   st_drop_geometry()
 
 write.csv(Data_county3_org %>% st_drop_geometry(),'results.csv')
   
+```
+
+``` {r}
+
+# Aggregate results and export shapefile for mapping in ArcGIS
+
+location_data <- data_raw %>%
+  group_by(location_final,Latitude,Longitude) %>% summarize(funding = sum(equity_analysis_funding)) %>%
+  st_as_sf(., coords = c("Longitude","Latitude"),crs='EPSG:4326') %>%
+  st_transform('EPSG:2272') %>%
+  st_join(.,basin_counties,left=FALSE)
+
+st_write(location_data,"outputs/Equity_Analysis/results_for_mapping.shp")
+
+st_write(pop_data_basin,"outputs//Equity_Analysis/census_block_data.shp")
+
 ```
 
 ``` {r map}
@@ -324,20 +379,6 @@ ggplot()+
   ylim(ymin,ymax)+
   theme_void()
 
-ggsave('overburdened_communities.png')
-
-```
-
-
-``` {r maps}
-
-ggplot()+
-  geom_sf(data=data_county3,aes(fill=funding_per_urban_capita))+
-  geom_sf(data=urban_basin,fill='orange',color='transparent')+
-  scale_fill_viridis()+
-  geom_sf(data=de_basin,color='lightblue',fill='transparent',linewidth=1)+
-  xlim(xmin,xmax)+
-  ylim(ymin,ymax)+
-  theme_void()
+ggsave('outputs/Equity_Analysis/overburdened_communities.png')
 
 ```
