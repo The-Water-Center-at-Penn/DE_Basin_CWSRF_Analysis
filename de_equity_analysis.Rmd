@@ -240,12 +240,11 @@ Data_County2 <- left_join(Data_County1,pop_county,by='NAME') %>%
 
 overburdened <- pop_data_basin %>% filter(urban == 'Urban') %>%
   st_drop_geometry() %>%
-  group_by(NAME,overburdened) %>% summarize(pop = sum(value)) %>%
-  pivot_wider(id_cols=NAME,names_from=overburdened,values_from=pop) %>%
-  mutate(Yes = ifelse(is.na(Yes),0,Yes),
-          percent_urban_overbudened = Yes / (Yes + No)) %>%
-  select(NAME,percent_urban_overbudened)
-
+  group_by(NAME,overburdened) %>% summarize(pop = sum(value), count = n()) %>%
+  pivot_wider(id_cols=NAME,names_from=overburdened,values_from=c(pop,count)) %>%
+  mutate(pop_Yes = ifelse(is.na(pop_Yes),0,pop_Yes),
+          percent_urban_overbudened = pop_Yes / (pop_Yes + pop_No)) %>%
+  rename('Overburdened_Pop' = pop_Yes, 'Non_Overburdened_Pop' = pop_No,'Overburdened_Count' = count_Yes, 'Non_Overburdened_Count' = count_No)
 
 Data_County3 <- left_join(Data_County2,overburdened,by='NAME')
 
@@ -336,6 +335,44 @@ ggplot()+
 
 ggsave('outputs/Equity_Analysis/overburdened_percent_funding.png')
 ```
+``` {r chart3_results}
+
+Data_County3 %>%
+  select(NAME,Overburdened_Pop,Non_Overburdened_Pop,State,funding) %>%
+  pivot_longer(cols=c(Overburdened_Pop,Non_Overburdened_Pop)) %>%
+  mutate(State = case_when(State == 'Pennsylvania' ~ 'PA', State == 'New Jersey' ~ 'NJ', State == 'Delaware' ~ 'DE')) %>%
+  mutate(label = paste0(NAME,' , ', State)) %>%
+  mutate(fund = ifelse(funding > 0, 'Recieved Financing','No Financing')) %>%
+  st_drop_geometry() %>%
+  ggplot()+
+    geom_bar(aes(x=reorder(label, -value),y=value,fill=name),stat='identity',position='stack')+
+    theme_bw()+
+    facet_grid(~fund, scales = "free", space = "free")+
+    scale_fill_manual(values=c('#008e00','#C35A00'),name='Urban Population',labels=c('Not Overburdened','Overburdened'))+
+    labs(x='County',y='Population') + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave('urban_pop.png')
+
+Data_County3 %>%
+  select(NAME,Overburdened_Count,Non_Overburdened_Count,State,funding) %>%
+  pivot_longer(cols=c(Overburdened_Count,Non_Overburdened_Count)) %>%
+  mutate(State = case_when(State == 'Pennsylvania' ~ 'PA', State == 'New Jersey' ~ 'NJ', State == 'Delaware' ~ 'DE')) %>%
+  mutate(label = paste0(NAME,' , ', State)) %>%
+  mutate(fund = ifelse(funding > 0, 'Recieved Financing','No Financing')) %>%
+  st_drop_geometry() %>%
+  ggplot()+
+    geom_bar(aes(x=reorder(label, -value),y=value,fill=name),stat='identity',position='stack')+
+    theme_bw()+
+    facet_grid(~fund, scales = "free", space = "free")+
+    scale_fill_manual(values=c('#008e00','#C35A00'),name='Census Tracts',labels=c('Not Overburdened','Overburdened'))+
+    labs(x='County',y='Census Tract Count') + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave('census_count.png')
+  
+```
+
 
 ``` {r export_results}
 
@@ -380,5 +417,19 @@ ggplot()+
   theme_void()
 
 ggsave('outputs/Equity_Analysis/overburdened_communities.png')
+
+ggplot()+
+  geom_sf(data=states_2272,size=2,fill='gray95')+
+  geom_sf(data=basin_counties,fill='white')+
+  geom_sf(data=pop_data_basin %>% filter(overburdened == 'Yes'),aes(fill='#66c2a5'),color='transparent')+
+  geom_sf(data=basin_counties,color='gray80',fill='transparent')+
+  geom_sf(data=states_2272,fill='transparent',color='gray60')+
+  geom_sf_text(data=basin_counties,aes(label=NAME),size=2,color='black')+
+  scale_fill_manual(values=c('#66c2a5'),label=c('CEJST Communities'),name='')+
+  xlim(xmin,xmax)+
+  ylim(ymin,ymax)+
+  theme_void()
+
+ggsave('outputs/Equity_Analysis/overburdened_communities2.png')
 
 ```
