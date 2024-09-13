@@ -349,7 +349,8 @@ Data_County3 %>%
     theme_bw()+
     facet_grid(~fund, scales = "free", space = "free")+
     scale_fill_manual(values=c('#008e00','#C35A00'),name='Urban Population',labels=c('Not Overburdened','Overburdened'))+
-    labs(x='County',y='Population') + 
+    labs(x='County',y='Urban Population') + 
+    scale_y_continuous(labels = label_comma()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ggsave('urban_pop.png')
@@ -360,13 +361,15 @@ Data_County3 %>%
   mutate(State = case_when(State == 'Pennsylvania' ~ 'PA', State == 'New Jersey' ~ 'NJ', State == 'Delaware' ~ 'DE')) %>%
   mutate(label = paste0(NAME,' , ', State)) %>%
   mutate(fund = ifelse(funding > 0, 'Recieved Financing','No Financing')) %>%
+  mutate(value = replace_na(value, 0)) %>%
   st_drop_geometry() %>%
   ggplot()+
     geom_bar(aes(x=reorder(label, -value),y=value,fill=name),stat='identity',position='stack')+
     theme_bw()+
     facet_grid(~fund, scales = "free", space = "free")+
-    scale_fill_manual(values=c('#008e00','#C35A00'),name='Census Tracts',labels=c('Not Overburdened','Overburdened'))+
-    labs(x='County',y='Census Tract Count') + 
+    scale_fill_manual(values=c('#008e00','#C35A00'),name='Urban Census Blocks',labels=c('Not Overburdened','Overburdened'))+
+    labs(x='County',y='Urban Census Block Count') + 
+    scale_y_continuous(labels = label_comma()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 ggsave('census_count.png')
