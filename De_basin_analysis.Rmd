@@ -27,7 +27,7 @@ data <- read_excel('Data/De_river_states.xlsx') %>%
 
 ## Plots for American Rivers Report
 
-All Projects Across the state and total funding across all three states.
+All Projects Across the state and total financing across all three states.
 
 ``` {r fig.width=10, fig.height=5,all_projects}
 
@@ -46,7 +46,7 @@ chart2 <- ggplot(data=data,aes(x=State,y=total))+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=4,nudge_y=50000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Total Funding For Projects',y='State')+
+  labs(y='Total Financing For Projects',y='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=15),axis.text = element_text(size = 12))
 
 ggsave('outputs/Project_Analysis/CWSRF_funding.png',units='in',width=5,height=5)
@@ -131,7 +131,7 @@ chart5 <- ggplot(data=data,aes(x=State,y=Nature_Based))+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', nudge_y = 5000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Project Funding (USD)',y='State')+
+  labs(y='Project Financing (USD)',y='State')+
     theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
 
 ggsave('outputs/Project_Analysis/nbs_funding.png',units='in',width=5,height=5)
@@ -140,7 +140,7 @@ chart6 <- ggplot(data=money_join,aes(x=State,y=percent_nbs))+
   geom_bar(stat='identity',width=0.65,fill='#008e00')+
   geom_text(aes(label=paste(as.character(round(percent_nbs * 100,1)),'%',setp='')),stat='identity',nudge_y = -0.01)+
   scale_y_continuous(limits=c(0,0.2),labels = scales::percent)+
-  labs(y='Percent of Funding',x='State')+
+  labs(y='Percent of Financing',x='State')+
   theme_classic()+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
 
@@ -161,22 +161,22 @@ data %>%
     theme_classic()+
     scale_fill_manual(values=c('#CCCCCC','#008e00'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
     scale_y_continuous(labels = label_dollar())+
-    labs(y='Total Funding (USD)',x='State')+
-    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
+    labs(y='Total Financing (USD)',x='State')+
+    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13),legend.position="bottom")
 
-ggsave('outputs/Project_Analysis/nature_based_totals.png',units='in',width=7,height=5)
+ggsave('outputs/Project_Analysis/nature_based_totals.png',units='in',width=5,height=5)
 
 money_join %>%
   select(percent_nbs,percent_other,State) %>%
   pivot_longer(cols=-State,names_to='type',values_to='values') %>%
   ggplot(aes(x=State,y=values,fill=type))+
-    geom_bar(width=0.7,stat='identity', show.legend = FALSE)+
+    geom_bar(width=0.7,stat='identity')+
     theme_classic()+
     scale_fill_manual(values=c('#008e00','#CCCCCC'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
     scale_y_continuous(labels = scales::percent)+
     geom_text(aes(label = paste(round(values * 100,2),'%'),y=values,x=State),size=5,position = position_stack(vjust=0.5))+
-    labs(y='Percent of Funding',x='State')+
-    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
+    labs(y='Percent of Financing',x='State')+
+    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13),legend.position="bottom")
 
 ggsave('outputs/Project_Analysis/nature_based_totals_percent.png',units='in',width=5,height=5)
 
@@ -199,7 +199,7 @@ totals_nbs_cat %>%
     theme_classic()+
     scale_y_continuous(labels = label_dollar())+
     scale_fill_manual(values=c('#008e00','#011F5B','#82AFD3','#990000'),labels=c('Green Infrasturcture','Hydromodification/Habitat Restoration','Land Conservation','Silviculture'),name='Project Type')+
-    labs(y='Total Funding (USD)',x='State')+
+    labs(y='Total Financing (USD)',x='State')+
     theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=12),axis.text = element_text(size = 12))+
   theme(legend.position="bottom", legend.direction="vertical")+
   guides(fill = guide_legend(ncol = 2))
@@ -228,9 +228,9 @@ ggplot(data=de_river_data,aes(x=State,y=total))+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=2.7,nudge_y=-10000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Total Funding (USD)',x='State')+
+  labs(y='Total Financing (USD)',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))+
-  ggtitle('Total Funding for CWSRF Projects By State')+
+  ggtitle('Total Financing for CWSRF Projects By State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
 
 ggsave('outputs/Project_Analysis/DE_Basin_projects_funding.png',units='in',width=5,height=5)
@@ -254,7 +254,7 @@ ggplot(data=de_river_data %>% filter(Nature_Based > 0),aes(x=State,y=total))+
   geom_text(aes(label = label_dollar()(after_stat(y))), stat = 'summary', fun = 'sum', size=3.5,nudge_y=-1000000)+
   scale_y_continuous(labels = label_dollar())+
   theme_classic()+
-  labs(y='Total Funding (USD)',x='State')+
+  labs(y='Total Financing (USD)',x='State')+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5))+
   theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
 
@@ -294,10 +294,10 @@ de_river_data %>%
     theme_classic()+
     scale_fill_manual(values=c('#CCCCCC','#008e00'),labels=c('Traditional','Nature Based Solution'),name='Project Type')+
     scale_y_continuous(labels = label_dollar())+
-    labs(y='Total Funding (USD)',x='State')+
-    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
+    labs(y='Total Financing (USD)',x='State')+
+    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13),legend.position='bottom')
 
-ggsave('outputs/Project_Analysis/nature_based_totals_basin.png',units='in',width=7,height=5)
+ggsave('outputs/Project_Analysis/nature_based_totals_basin.png',units='in',width=5,height=5)
 
 money_nature_basin <- de_river_data %>% filter(Nature_Based > 0) %>% group_by(State) %>% summarize(nature = sum(Nature_Based))
 money_all_basin <- de_river_data %>% group_by(State) %>% summarize(total = sum(Current_Agreement_Amount))
@@ -310,13 +310,13 @@ money_join_basin %>%
   select(percent_nbs,percent_other,State) %>%
   pivot_longer(cols=-State,names_to='type',values_to='values') %>%
   ggplot(aes(x=State,y=values,fill=type))+
-    geom_bar(width=0.7,stat='identity', show.legend = FALSE)+
+    geom_bar(width=0.7,stat='identity')+
     theme_classic()+
     scale_fill_manual(values=c('#008e00','#CCCCCC'),labels=c('Nature Based Solution','Traditional'),name='Project Type')+
     scale_y_continuous(labels = scales::percent)+
     geom_text(aes(label = paste(round(values * 100,2),'%'),y=values,x=State),size=5,position = position_stack(vjust=0.5))+
-    labs(y='Percent of Funding',x='State')+
-    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13))
+    labs(y='Percent of Financing',x='State')+
+    theme(panel.grid.major.y = element_line(color = "gray90",linewidth = 0.5),plot.title = element_text(hjust = 0.5),axis.title = element_text(size=13),axis.text = element_text(size = 13),legend.position='bottom')
 
 ggsave('outputs/Project_Analysis/nature_based_totals_basin_percent.png',units='in',width=5,height=5)
 
@@ -359,7 +359,7 @@ ggplot(agg, aes(x="", y=percent_funding , fill=Hardship_Disadvantaged_Communit))
   geom_text(aes(label = paste0(round(percent_funding), "%")),position = position_stack(vjust = 0.5))+
   scale_fill_manual(values=c('#ffe093','lightgreen'),name='Disadvantaged Community')+
   theme_void()+
-  labs(title='% of CWSRF Funding in Pennsylvania Going to Disadvantaged Communities')
+  labs(title='% of CWSRF Financing in Pennsylvania Going to Disadvantaged Communities')
 
 ggsave('outputs/Project_Analysis/percent_pie.png',units='in',width=5,height=4)
 
@@ -376,7 +376,7 @@ ggplot(hardship_funding, aes(x="", y=percent, fill=name))+
   geom_text(aes(label = paste0(round(percent), "%")),position = position_stack(vjust = 0.5))+
   scale_fill_manual(values=c('#ffe093','lightgreen'),name='',labels=c('Not Subsidized','Subsidized'))+
   theme_void()+
-  labs(title='% of CWSRF Funding in Pennslyvania that was Subsized \n July 2017 to June 2023')
+  labs(title='% of CWSRF Financing in Pennslyvania that was Subsized \n July 2017 to June 2023')
 
 ggsave('outputs/Project_Analysis/percent_subsized_pie.png',units='in',width=5,height=4)
 
@@ -418,7 +418,7 @@ ggplot()+
   geom_col(data=hardship_funding_type,aes(x='',y=Value,fill=Category))+
   coord_polar("y", start=0) +
   scale_fill_manual(values=c('#fcd253','#7fffb4','#96beff'),labels=c('Non Point Source','Stormwater','Wastewater'),name='Project Category')+
-  labs(title='Funding by Project Category in Disadvantaged Communities \n July 2017 to June 2023')+
+  labs(title='Financing by Project Category in Disadvantaged Communities \n July 2017 to June 2023')+
   theme_void()
 
 ggsave('outputs/Project_Analysis/type.png',units='in',width=5,height=4)
